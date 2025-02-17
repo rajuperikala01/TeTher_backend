@@ -1,0 +1,16 @@
+node_modules# 🏗 Node Modules
+node_modules/
+  
+# ⚙ Environment Variables
+.env
+.env.local
+
+# 🚀 Build and Output
+dist/
+build/
+out/
+
+
+
+
+
