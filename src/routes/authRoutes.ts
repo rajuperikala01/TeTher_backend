@@ -50,7 +50,22 @@ router.post("/signup", async (req: Request, res: Response) => {
     });
     const secret = process.env.JWT_SECRET || "";
     const token = jwt.sign({ id: user.id, email: user.email }, secret);
-  } catch (error) {}
+
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+    });
+
+    res.status(200).json({
+      message: "Successfull",
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "An Error Occurred please try again later",
+    });
+    return;
+  }
 });
 
 export default router;
