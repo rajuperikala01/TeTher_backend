@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { signupSchema } from "../validationSchemas/authSchemas";
+import { signInSchema, signupSchema } from "../validationSchemas/authSchemas";
 import prisma from "../db/index";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -8,6 +8,7 @@ const router = Router();
 
 router.post("/signup", async (req: Request, res: Response) => {
   const validatedData = signupSchema.safeParse(req.body);
+  console.log(validatedData.data);
 
   if (!validatedData.success) {
     res.status(401).json({
@@ -56,6 +57,7 @@ router.post("/signup", async (req: Request, res: Response) => {
       secure: false,
       sameSite: "strict",
     });
+    console.log("cookie set");
 
     res.status(200).json({
       message: "Successfull",
@@ -65,6 +67,60 @@ router.post("/signup", async (req: Request, res: Response) => {
       error: "An Error Occurred please try again later",
     });
     return;
+  }
+});
+
+router.post("/signin", async (req: Request, res: Response) => {
+  const validatedData = signInSchema.safeParse(req.body);
+
+  if (!validatedData.success) {
+    res.status(400).json({
+      error: validatedData.error.issues[0],
+    });
+  }
+
+  try {
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        email: validatedData.data?.email,
+      },
+    });
+    if (!existingUser) {
+      res.status(400).json({
+        error: "User with this Email does not exists",
+      });
+    }
+    if (existingUser && validatedData.data?.password) {
+      const authourized = await bcrypt.compare(
+        validatedData.data.password,
+        existingUser.password
+      );
+      if (!authourized) {
+        res.status(400).json({
+          error: "Incorrect password",
+        });
+      }
+      const secret = process.env.JWT_SECRET || "";
+      const token = jwt.sign(
+        { userId: existingUser.id, email: existingUser.email },
+        secret
+      );
+
+      res.cookie("auth_token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: true,
+      });
+
+      res.status(200).json({
+        message: "Login Successful",
+      });
+      return;
+    }
+  } catch (error) {
+    res.status(500).json({
+      error: "An Error Occurred Please try again after sometime",
+    });
   }
 });
 
