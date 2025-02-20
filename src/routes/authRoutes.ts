@@ -2,7 +2,7 @@ import { Request, Response, Router } from "express";
 import { signInSchema, signupSchema } from "../validationSchemas/authSchemas";
 import prisma from "../db/index";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { JsonWebTokenError } from "jsonwebtoken";
 
 const router = Router();
 
@@ -121,6 +121,41 @@ router.post("/signin", async (req: Request, res: Response) => {
     res.status(500).json({
       error: "An Error Occurred Please try again after sometime",
     });
+  }
+});
+
+router.get("/auth-check", (req: Request, res: Response) => {
+  const token = req.cookies.auth_token;
+
+  if (!token) {
+    res.status(403).json({
+      Authenticated: false,
+    });
+    return;
+  }
+
+  try {
+    const secret = process.env.JWT_SECRET || "";
+    const verification = jwt.verify(token, secret);
+
+    res.status(200).json({
+      Authenticated: true,
+    });
+    return;
+  } catch (error: any) {
+    if (error.name === "TokenExpiredError") {
+      res.status(401).json({ error: "Token expired. Please log in again." });
+      return;
+    } else if (error.name === "JsonWebTokenError") {
+      res.status(403).json({ error: "Invalid token. Not authenticated." });
+      return;
+    } else if (error.name === "NotBeforeError") {
+      res.status(403).json({ error: "Token is not active yet." });
+      return;
+    } else {
+      res.status(500).json({ error: "Internal server error." });
+      return;
+    }
   }
 });
 
