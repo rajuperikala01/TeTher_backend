@@ -62,6 +62,8 @@ router.post("/signup", async (req: Request, res: Response) => {
 
     res.status(200).json({
       message: "Successfull",
+      userId: user.id,
+      email: user.email,
     });
   } catch (error) {
     res.status(500).json({
@@ -120,6 +122,8 @@ router.post("/signin", async (req: Request, res: Response) => {
 
       res.status(200).json({
         message: "Login Successful",
+        userId: existingUser.id,
+        email: existingUser.email,
       });
       return;
     }
