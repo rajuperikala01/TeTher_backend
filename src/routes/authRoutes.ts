@@ -2,7 +2,7 @@ import { Request, Response, Router } from "express";
 import { signInSchema, signupSchema } from "../validationSchemas/authSchemas";
 import prisma from "../db/index";
 import bcrypt from "bcrypt";
-import jwt, { JsonWebTokenError, JwtPayload } from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 const router = Router();
 
